@@ -28,9 +28,63 @@ const analytics = getAnalytics(app);
 const auth = firebase.auth();
 const firestore = firebase.firestore();
 
+const messagesRef = firestore.collection('messages');
 function App() {
 
   const [user] = useAuthState(auth);
+
+  /*firestore.collection('messages').onSnapshot((snapshot) => {
+    console.log('snapshot', snapshot.docChanges());
+    snapshot.docChanges().forEach((change) => {
+      if (change.type === 'added') {
+        console.log('New: ', change.doc.data());
+
+        const message = {
+          "message": change.doc.data().text
+        }
+
+        console.log('message', message);
+
+        var myHeaders = new Headers();
+        myHeaders.append("authorization", "simon");
+        myHeaders.append("Content-Type", "application/json");
+
+        var raw = JSON.stringify({
+        "message": "Tell me about Austria"
+        });
+
+        var requestOptions = {
+        method: 'POST',
+        headers: myHeaders,
+        body: raw,
+        redirect: 'follow'
+        };
+
+        fetch("http://localhost:3001/converse", requestOptions)
+        .then(response => response.text())
+        .then(result => console.log(result))
+        .catch(error => console.log('error', error));
+
+
+      }
+      if (change.type === 'modified') {
+        console.log('Modified: ', change.doc.data());
+      }
+    })
+  });*/
+
+  /*const collectionRef = firebase.firestore().collection('messages');
+  collectionRef.orderBy('timestamp', 'desc').limit(1).get()
+    .then((querySnapshot) => {
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        console.log('Newest document:', data);
+      });
+    })
+    .catch((error) => {
+      console.error('Error getting documents:', error);
+    });*/
+
 
   return (
     <div className="App">
@@ -46,6 +100,7 @@ function App() {
   );
 }
 
+// 
 function SignIn() {
   const signInWithGoogle = () => {
     const provider = new firebase.auth.GoogleAuthProvider();
@@ -64,8 +119,7 @@ function SignOut () {
 
 function ChatRoom () {
   const dummy = useRef();
-  const messagesRef = firestore.collection('messages');
-  const query = messagesRef.orderBy('createdAt').limit(25);
+  const query = messagesRef.orderBy('createdAt', 'asc');
 
   const [messages] = useCollectionData(query, { idField: 'id' });
 
@@ -74,6 +128,10 @@ function ChatRoom () {
 
   const sendMessage = async (e) => {
     e.preventDefault();
+
+    console.log("text: ", formValue);
+
+    getChatbot(formValue);
 
     const { uid, photoURL } = auth.currentUser;
 
@@ -107,15 +165,54 @@ function ChatRoom () {
   </>)
 }
 
+async function getChatbot (formValue) {
+  const message = {
+    "message": formValue
+  }
+
+  console.log('message', message);
+
+ var myHeaders = new Headers();
+myHeaders.append("Content-Type", "application/json");
+
+var raw = JSON.stringify(message);
+
+var requestOptions = {
+  method: 'POST',
+  headers: myHeaders,
+  body: raw,
+  redirect: 'follow'
+};
+
+fetch("http://localhost:3001/converse", requestOptions)
+  .then(response => response.text())
+  .then(result => {
+    console.log(result);
+    const jsonObject = JSON.parse(result);
+
+    const textValue = jsonObject[0].text.replace('\nAI:', '');
+
+    console.log('textValue', textValue);
+
+    messagesRef.add({
+      text: textValue,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      uid: "chatbot",
+      photoURL: "https://th.bing.com/th/id/R.cd9a844cbc07c07ad9d0059541b09b93?rik=JL3NwOT1mNEYAA&pid=ImgRaw&r=0"
+    })
+  })
+  .catch(error => console.log('error', error));
+}
+
 function ChatMessage(props) {
-  const { text, uid, photoURL } = props.message;
+  const { text, uid, photoURL, createdAt } = props.message;
 
   const messageClass = uid === auth.currentUser.uid ? 'sent' : 'received';
 
   return (<>
     <div className={`message ${messageClass}`}>
-      <img src={photoURL || 'https://api.adorable.io/avatars/23/abott@adorable.png'} />
-      <p>{text}</p>
+      <img alt='GOOGLE PROFILE' src={photoURL || 'https://api.adorable.io/avatars/23/abott@adorable.png'} />
+      <p id={`${createdAt}`}>{text}</p>
     </div>
   </>)
 }
