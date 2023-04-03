@@ -1,6 +1,5 @@
 import React, { useRef, useState } from 'react';
 import logo from './logo.svg';
-import './App.css';
 
 // Firebase App (the core Firebase SDK) is always required and must be listed first
 import firebase from 'firebase/compat/app';
@@ -11,6 +10,7 @@ import 'firebase/compat/auth';
 // Add the Firebase services that you want to use
 import { useAuthState, useSignInWithGoogle } from 'react-firebase-hooks/auth';
 import { useCollectionData } from 'react-firebase-hooks/firestore';
+import MarkdownEditor from './components/MarkdownEditor';
 
 const firebaseConfig = {
   apiKey: "AIzaSyCLLHDBmcalZvc9YypnJeCBKbpPcZNum7c",
@@ -85,14 +85,12 @@ function App() {
       console.error('Error getting documents:', error);
     });*/
 
-
   return (
     <div className="App">
       <header>
         <h1>BRANNAN & SCHÖGGLER</h1>
         <SignOut />
       </header>
-
       <section>
         {user ? <ChatRoom /> : <SignIn />}
       </section>
@@ -107,17 +105,17 @@ function SignIn() {
     auth.signInWithPopup(provider);
   }
   return (
-      <button onClick={signInWithGoogle}>Sign in with Google</button>
+    <button onClick={signInWithGoogle}>Sign in with Google</button>
   )
 }
 
-function SignOut () {
+function SignOut() {
   return auth.currentUser && (
     <button onClick={() => auth.signOut()}>Sign Out</button>
   )
 }
 
-function ChatRoom () {
+function ChatRoom() {
   const dummy = useRef();
   const query = messagesRef.orderBy('createdAt', 'asc');
 
@@ -165,43 +163,43 @@ function ChatRoom () {
   </>)
 }
 
-async function getChatbot (formValue) {
+async function getChatbot(formValue) {
   const message = {
     "message": formValue
   }
 
   console.log('message', message);
 
- var myHeaders = new Headers();
-myHeaders.append("Content-Type", "application/json");
+  var myHeaders = new Headers();
+  myHeaders.append("Content-Type", "application/json");
 
-var raw = JSON.stringify(message);
+  var raw = JSON.stringify(message);
 
-var requestOptions = {
-  method: 'POST',
-  headers: myHeaders,
-  body: raw,
-  redirect: 'follow'
-};
+  var requestOptions = {
+    method: 'POST',
+    headers: myHeaders,
+    body: raw,
+    redirect: 'follow'
+  };
 
-fetch("http://localhost:3001/converse", requestOptions)
-  .then(response => response.text())
-  .then(result => {
-    console.log(result);
-    const jsonObject = JSON.parse(result);
+  fetch("http://localhost:3001/converse", requestOptions)
+    .then(response => response.text())
+    .then(result => {
+      console.log(result);
+      const jsonObject = JSON.parse(result);
 
-    const textValue = jsonObject[0].text.replace('\nAI:', '');
+      const textValue = jsonObject[0].text.replace('\nAI:', '');
 
-    console.log('textValue', textValue);
+      console.log('textValue', textValue);
 
-    messagesRef.add({
-      text: textValue,
-      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-      uid: "chatbot",
-      photoURL: "https://th.bing.com/th/id/R.cd9a844cbc07c07ad9d0059541b09b93?rik=JL3NwOT1mNEYAA&pid=ImgRaw&r=0"
+      messagesRef.add({
+        text: textValue,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        uid: "chatbot",
+        photoURL: "https://th.bing.com/th/id/R.cd9a844cbc07c07ad9d0059541b09b93?rik=JL3NwOT1mNEYAA&pid=ImgRaw&r=0"
+      })
     })
-  })
-  .catch(error => console.log('error', error));
+    .catch(error => console.log('error', error));
 }
 
 function ChatMessage(props) {

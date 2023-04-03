@@ -152,3 +152,15 @@ img {
   border-radius: 50%;
   margin: 2px 5px;
 }
+
+.markdown-display {
+  width: 100%;
+}
+
+.markdown-textarea {
+  width: 50%;
+}
+
+.markdown-preview {
+  width: 50%;
+}
