@@ -8,6 +8,7 @@ import { getAnalytics } from "firebase/analytics";
 import 'firebase/compat/firestore';
 import 'firebase/compat/auth';
 import 'firebase/compat/storage';
+import 'firebase/compat/database';
 
 // Add the Firebase services that you want to use
 import { useAuthState, useSignInWithGoogle } from 'react-firebase-hooks/auth';
@@ -29,13 +30,15 @@ const app = firebase.initializeApp(firebaseConfig)
 const analytics = getAnalytics(app);
 
 const storage = firebase.storage();
-
 const auth = firebase.auth();
 const firestore = firebase.firestore();
+const database = firebase.database();
 
 const messagesRef = firestore.collection('messages');
 const chatroomRef = firestore.collection('chatrooms');
 const storageRef = storage.ref();
+const databaseRef = database.ref();
+
 
 function App() {
 
@@ -119,11 +122,11 @@ function SignIn() {
     auth.signInWithPopup(provider);
   }
   return (<>
-      <button onClick={signInWithGoogle}>Sign in with Google</button>
+    <button onClick={signInWithGoogle}>Sign in with Google</button>
   </>)
 }
 
-function SignOut () {
+function SignOut() {
   return auth.currentUser && (
     <button onClick={() => auth.signOut()}>Sign Out</button>
   )
@@ -134,33 +137,27 @@ let chatBot = false;
 let markdown = false;
 
 
-function ChatRooms () {
-  const [ showChatRoom, setShowChatRoom ] = useState(false);
+function ChatRooms() {
+  const [showChatRoom, setShowChatRoom] = useState(false);
   chatBot = false;
   markdown = false;
 
-
-  auth.currentUser.getIdToken(/* forceRefresh */ true).then(function(idToken) {
-    // Send token to your backend via HTTPS
-    console.log('idToken', idToken);
-  }).catch(function(error) {
-    // Handle error
-  });
-
-
   return (<>
-      {!showChatRoom && <>
-      <button onClick={() => {setShowChatRoom(true)}}>Chatroom</button>
+    {!showChatRoom && <>
+      <button onClick={() => { setShowChatRoom(true) }}>Chatroom</button>
       <br></br>
-      <button onClick={() => {setShowChatRoom(true); chatBot = true;}}>Chatroom + Chatbot</button>
+      <button onClick={() => { setShowChatRoom(true); chatBot = true; }}>Chatroom + Chatbot</button>
       <br></br>
-      <button onClick={() => {setShowChatRoom(true); markdown = true;}}>Chatroom + Markdown</button></>}
-      
-      {showChatRoom && <ChatRoom />}
-      </>)
+      <button onClick={() => { setShowChatRoom(true); markdown = true; }}>Chatroom + Markdown</button></>}
+
+    {showChatRoom && <ChatRoom />}
+  </>)
 }
 
-function ChatRoom () {
+function ChatRoom() {
+
+  writeUserOption(auth.currentUser.uid, 1);
+
   const dummy = useRef();
   const query = messagesRef.orderBy('createdAt', 'asc');
 
@@ -176,7 +173,6 @@ function ChatRoom () {
     console.log("text: ", formValue);
 
     //if (chatBot) {
-      getChatbot(formValue);
     /*} else if (markdown) {
       console.log("markdown");
     }*/
@@ -186,9 +182,12 @@ function ChatRoom () {
     await messagesRef.add({
       text: formValue,
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-      uid,
-      photoURL
+      uid: uid,
+      photoURL: photoURL
     })
+
+    
+    getChatbot(formValue);
 
     setFormValue('');
     dummy.current.scrollIntoView({ behavior: 'smooth' });
@@ -213,43 +212,56 @@ function ChatRoom () {
   </>)
 }
 
-async function getChatbot (formValue) {
-  const message = {
-    "message": formValue
-  }
+async function getChatbot(formValue) {
+  try {
+    const idToken = await auth.currentUser.getIdToken(/* forceRefresh */ true);
 
-  console.log('message', message);
+    const message = {
+      "message": formValue
+    }
 
- var myHeaders = new Headers();
-myHeaders.append("Content-Type", "application/json");
+    console.log('message', message);
 
-var raw = JSON.stringify(message);
+    var myHeaders = new Headers();
+    myHeaders.append("authorization", idToken);
+    myHeaders.append("Content-Type", "application/json");
 
-var requestOptions = {
-  method: 'POST',
-  headers: myHeaders,
-  body: raw,
-  redirect: 'follow'
-};
+    var raw = JSON.stringify(message);
 
-fetch("http://localhost:3001/converse", requestOptions)
-  .then(response => response.text())
-  .then(result => {
+    var requestOptions = {
+      method: 'POST',
+      headers: myHeaders,
+      body: raw,
+      redirect: 'follow'
+    };
+
+    console.log('requestOptions', requestOptions);
+
+    const response = await fetch("http://localhost:3001/converse", requestOptions);
+    const result = await response.text();
     console.log(result);
-    const jsonObject = JSON.parse(result);
+    let textValue = result;
+    /*if (result !== 'THE AI IS NOT WORKING AT THE MOMENT') {
+      const jsonObject = JSON.parse(result);
 
-    const textValue = jsonObject[0].text.replace('\nAI:', '');
+      textValue = jsonObject[0].text.replace('\nAI:', '');
 
-    console.log('textValue', textValue);
+      console.log('textValue', textValue);
+    } else {
+      textValue = result;
+    }*/
 
+    const imageUrl = await ChatBotImage();
     messagesRef.add({
       text: textValue,
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       uid: "chatbot",
-      photoURL: ChatBotImage().imageUrl
-    })
-  })
-  .catch(error => console.log('error', error));
+      photoURL: imageUrl
+    });
+
+  } catch (error) {
+    console.log('error', error);
+  }
 }
 
 function ChatMessage(props) {
@@ -257,40 +269,33 @@ function ChatMessage(props) {
 
   const messageClass = uid === auth.currentUser.uid ? 'sent' : 'received';
 
+
   return (<>
     <div className={`message ${messageClass}`}>
-      <img alt='GOOGLE PROFILE' src={photoURL || UserDefaultImage().imageUrl} />
+      <img alt='GOOGLE PROFILE' src={photoURL} />
       <p id={`${createdAt}`}>{text}</p>
     </div>
   </>)
 }
 
-function UserDefaultImage () {
+const UserDefaultImage = async () => {
   const imageRef = storageRef.child('user.png');
-
-  const [imageUrl, setImageUrl] = useState("");
-
-  useEffect(() => {
-    imageRef.getDownloadURL().then((url) => {
-      setImageUrl(url);
-    });
-  }, []);
-
-  return {imageUrl};
+  const url = await imageRef.getDownloadURL();
+  return url;
 }
 
-function ChatBotImage () {
+const ChatBotImage = async () => {
   const imageRef = storageRef.child('chatbot.png');
-
-  const [imageUrl, setImageUrl] = useState("");
-
-  useEffect(() => {
-    imageRef.getDownloadURL().then((url) => {
-      setImageUrl(url);
-    });
-  }, []);
-
-  return {imageUrl};
+  const url = await imageRef.getDownloadURL();
+  return url;
 }
+
+function writeUserOption(userId, option) {
+  let data = {
+    option: option
+  }
+  const newRef = database.ref(userId).push(data);
+}
+
 
 export default App;
