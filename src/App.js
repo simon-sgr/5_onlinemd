@@ -53,34 +53,26 @@ function App() {
     snapshot.docChanges().forEach((change) => {
       if (change.type === 'added') {
         console.log('New: ', change.doc.data());
-
         const message = {
           "message": change.doc.data().text
         }
-
         console.log('message', message);
-
         var myHeaders = new Headers();
         myHeaders.append("authorization", "simon");
         myHeaders.append("Content-Type", "application/json");
-
         var raw = JSON.stringify({
         "message": "Tell me about Austria"
         });
-
         var requestOptions = {
         method: 'POST',
         headers: myHeaders,
         body: raw,
         redirect: 'follow'
         };
-
         fetch("http://localhost:3001/converse", requestOptions)
         .then(response => response.text())
         .then(result => console.log(result))
         .catch(error => console.log('error', error));
-
-
       }
       if (change.type === 'modified') {
         console.log('Modified: ', change.doc.data());
