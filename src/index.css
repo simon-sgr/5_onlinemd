@@ -9,7 +9,7 @@ body {
 }
 
 .App header {
-  background-color: #0a0909;
+  background-color: #24bcde;
   height: 10vh;
   min-height: 50px;
   color: white;
@@ -54,7 +54,7 @@ main::-webkit-scrollbar-thumb {
   background: #a48aee;
 }
 
-form {
+#sendMessageForm {
   height: 10vh;
   position: fixed;
   bottom: 0;
@@ -65,13 +65,13 @@ form {
   font-size: 1.5rem;
 }
 
-form button {
+#sendMessageForm #sendMessageButton {
   width: 20%;
   background-color: rgb(56, 56, 143);
 }
 
 
-input {
+#sendMessageInput {
   line-height: 1.5;
   width: 100%;
   font-size: 1.5rem;
@@ -151,4 +151,8 @@ img {
   height: 40px;
   border-radius: 50%;
   margin: 2px 5px;
+}
+
+h3 {
+  color: white;
 }

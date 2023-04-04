@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import logo from './logo.svg';
 import './App.css';
 
@@ -7,10 +7,12 @@ import firebase from 'firebase/compat/app';
 import { getAnalytics } from "firebase/analytics";
 import 'firebase/compat/firestore';
 import 'firebase/compat/auth';
+import 'firebase/compat/storage';
 
 // Add the Firebase services that you want to use
 import { useAuthState, useSignInWithGoogle } from 'react-firebase-hooks/auth';
 import { useCollectionData } from 'react-firebase-hooks/firestore';
+
 
 const firebaseConfig = {
   apiKey: "AIzaSyCLLHDBmcalZvc9YypnJeCBKbpPcZNum7c",
@@ -19,19 +21,29 @@ const firebaseConfig = {
   storageBucket: "onlinemd-d57e3.appspot.com",
   messagingSenderId: "353091770618",
   appId: "1:353091770618:web:dee7c2f51667fd3a155143",
-  measurementId: "G-GWMBCV0EYC"
+  measurementId: "G-GWMBCV0EYC",
+  serviceAccountId: "onlinemd-d57e3@appspot.gserviceaccount.com"
 };
 
 const app = firebase.initializeApp(firebaseConfig)
 const analytics = getAnalytics(app);
 
+const storage = firebase.storage();
+
 const auth = firebase.auth();
 const firestore = firebase.firestore();
 
 const messagesRef = firestore.collection('messages');
+const chatroomRef = firestore.collection('chatrooms');
+const storageRef = storage.ref();
+
 function App() {
 
   const [user] = useAuthState(auth);
+
+  useEffect(() => {
+    document.title = "OnlineMD";
+  }, []);
 
   /*firestore.collection('messages').onSnapshot((snapshot) => {
     console.log('snapshot', snapshot.docChanges());
@@ -94,7 +106,7 @@ function App() {
       </header>
 
       <section>
-        {user ? <ChatRoom /> : <SignIn />}
+        {user ? <ChatRooms /> : <SignIn />}
       </section>
     </div>
   );
@@ -106,9 +118,9 @@ function SignIn() {
     const provider = new firebase.auth.GoogleAuthProvider();
     auth.signInWithPopup(provider);
   }
-  return (
+  return (<>
       <button onClick={signInWithGoogle}>Sign in with Google</button>
-  )
+  </>)
 }
 
 function SignOut () {
@@ -117,9 +129,41 @@ function SignOut () {
   )
 }
 
+
+let chatBot = false;
+let markdown = false;
+
+
+function ChatRooms () {
+  const [ showChatRoom, setShowChatRoom ] = useState(false);
+  chatBot = false;
+  markdown = false;
+
+
+  auth.currentUser.getIdToken(/* forceRefresh */ true).then(function(idToken) {
+    // Send token to your backend via HTTPS
+    console.log('idToken', idToken);
+  }).catch(function(error) {
+    // Handle error
+  });
+
+
+  return (<>
+      {!showChatRoom && <>
+      <button onClick={() => {setShowChatRoom(true)}}>Chatroom</button>
+      <br></br>
+      <button onClick={() => {setShowChatRoom(true); chatBot = true;}}>Chatroom + Chatbot</button>
+      <br></br>
+      <button onClick={() => {setShowChatRoom(true); markdown = true;}}>Chatroom + Markdown</button></>}
+      
+      {showChatRoom && <ChatRoom />}
+      </>)
+}
+
 function ChatRoom () {
   const dummy = useRef();
   const query = messagesRef.orderBy('createdAt', 'asc');
+
 
   const [messages] = useCollectionData(query, { idField: 'id' });
 
@@ -131,7 +175,11 @@ function ChatRoom () {
 
     console.log("text: ", formValue);
 
-    getChatbot(formValue);
+    //if (chatBot) {
+      getChatbot(formValue);
+    /*} else if (markdown) {
+      console.log("markdown");
+    }*/
 
     const { uid, photoURL } = auth.currentUser;
 
@@ -155,11 +203,11 @@ function ChatRoom () {
 
     </main>
 
-    <form onSubmit={sendMessage}>
+    <form id='sendMessageForm' onSubmit={sendMessage}>
 
-      <input value={formValue} onChange={(e) => setFormValue(e.target.value)} placeholder="say something nice" />
+      <input id='sendMessageInput' value={formValue} onChange={(e) => setFormValue(e.target.value)} placeholder="say something nice" />
 
-      <button type="submit" disabled={!formValue}>✔️</button>
+      <button id='sendMessageButton' type="submit" disabled={!formValue}>✔️</button>
 
     </form>
   </>)
@@ -198,7 +246,7 @@ fetch("http://localhost:3001/converse", requestOptions)
       text: textValue,
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       uid: "chatbot",
-      photoURL: "https://th.bing.com/th/id/R.cd9a844cbc07c07ad9d0059541b09b93?rik=JL3NwOT1mNEYAA&pid=ImgRaw&r=0"
+      photoURL: ChatBotImage().imageUrl
     })
   })
   .catch(error => console.log('error', error));
@@ -211,10 +259,38 @@ function ChatMessage(props) {
 
   return (<>
     <div className={`message ${messageClass}`}>
-      <img alt='GOOGLE PROFILE' src={photoURL || 'https://api.adorable.io/avatars/23/abott@adorable.png'} />
+      <img alt='GOOGLE PROFILE' src={photoURL || UserDefaultImage().imageUrl} />
       <p id={`${createdAt}`}>{text}</p>
     </div>
   </>)
+}
+
+function UserDefaultImage () {
+  const imageRef = storageRef.child('user.png');
+
+  const [imageUrl, setImageUrl] = useState("");
+
+  useEffect(() => {
+    imageRef.getDownloadURL().then((url) => {
+      setImageUrl(url);
+    });
+  }, []);
+
+  return {imageUrl};
+}
+
+function ChatBotImage () {
+  const imageRef = storageRef.child('chatbot.png');
+
+  const [imageUrl, setImageUrl] = useState("");
+
+  useEffect(() => {
+    imageRef.getDownloadURL().then((url) => {
+      setImageUrl(url);
+    });
+  }, []);
+
+  return {imageUrl};
 }
 
 export default App;

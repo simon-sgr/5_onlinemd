@@ -1,6 +1,7 @@
 const express = require("express");
 const openAI = require("openai");
 
+
 // Importing the dotenv module to access environment variables
 require("dotenv").config();
 
@@ -55,7 +56,14 @@ app.post("/converse", (req, res) => {
     })
     .then((response) => {
       // Sending the response data back to the client
-      res.send(response.data.choices);
+      if (response.status === 200) {
+        res.send(response.data.choices);
+      } else {
+        res.send("Error: " + response.status);
+      }
+    })
+    .catch((error) => {
+      console.log(error);
     });
 });
 
