@@ -1,5 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import logo from './logo.svg';
+import './App.css';
 
 // Firebase App (the core Firebase SDK) is always required and must be listed first
 import firebase from 'firebase/compat/app';
@@ -11,7 +12,6 @@ import 'firebase/compat/storage';
 // Add the Firebase services that you want to use
 import { useAuthState, useSignInWithGoogle } from 'react-firebase-hooks/auth';
 import { useCollectionData } from 'react-firebase-hooks/firestore';
-import MarkdownEditor from './components/MarkdownEditor';
 
 
 const firebaseConfig = {
@@ -50,34 +50,26 @@ function App() {
     snapshot.docChanges().forEach((change) => {
       if (change.type === 'added') {
         console.log('New: ', change.doc.data());
-
         const message = {
           "message": change.doc.data().text
         }
-
         console.log('message', message);
-
         var myHeaders = new Headers();
         myHeaders.append("authorization", "simon");
         myHeaders.append("Content-Type", "application/json");
-
         var raw = JSON.stringify({
         "message": "Tell me about Austria"
         });
-
         var requestOptions = {
         method: 'POST',
         headers: myHeaders,
         body: raw,
         redirect: 'follow'
         };
-
         fetch("http://localhost:3001/converse", requestOptions)
         .then(response => response.text())
         .then(result => console.log(result))
         .catch(error => console.log('error', error));
-
-
       }
       if (change.type === 'modified') {
         console.log('Modified: ', change.doc.data());
@@ -97,12 +89,14 @@ function App() {
       console.error('Error getting documents:', error);
     });*/
 
+
   return (
     <div className="App">
       <header>
         <h1>BRANNAN & SCHÖGGLER</h1>
         <SignOut />
       </header>
+
       <section>
         {user ? <ChatRooms /> : <SignIn />}
       </section>
@@ -116,15 +110,9 @@ function SignIn() {
     const provider = new firebase.auth.GoogleAuthProvider();
     auth.signInWithPopup(provider);
   }
-<<<<<<< HEAD
-  return (
-    <button onClick={signInWithGoogle}>Sign in with Google</button>
-  )
-=======
   return (<>
-      <button onClick={signInWithGoogle}>Sign in with Google</button>
+    <button onClick={signInWithGoogle}>Sign in with Google</button>
   </>)
->>>>>>> fea9dfe541266f1d9d113722bc284619a6f45f54
 }
 
 function SignOut() {
@@ -133,42 +121,38 @@ function SignOut() {
   )
 }
 
-<<<<<<< HEAD
-function ChatRoom() {
-=======
 
 let chatBot = false;
 let markdown = false;
 
 
-function ChatRooms () {
-  const [ showChatRoom, setShowChatRoom ] = useState(false);
+function ChatRooms() {
+  const [showChatRoom, setShowChatRoom] = useState(false);
   chatBot = false;
   markdown = false;
 
 
-  auth.currentUser.getIdToken(/* forceRefresh */ true).then(function(idToken) {
+  auth.currentUser.getIdToken(/* forceRefresh */ true).then(function (idToken) {
     // Send token to your backend via HTTPS
     console.log('idToken', idToken);
-  }).catch(function(error) {
+  }).catch(function (error) {
     // Handle error
   });
 
 
   return (<>
-      {!showChatRoom && <>
-      <button onClick={() => {setShowChatRoom(true)}}>Chatroom</button>
+    {!showChatRoom && <>
+      <button onClick={() => { setShowChatRoom(true) }}>Chatroom</button>
       <br></br>
-      <button onClick={() => {setShowChatRoom(true); chatBot = true;}}>Chatroom + Chatbot</button>
+      <button onClick={() => { setShowChatRoom(true); chatBot = true; }}>Chatroom + Chatbot</button>
       <br></br>
-      <button onClick={() => {setShowChatRoom(true); markdown = true;}}>Chatroom + Markdown</button></>}
-      
-      {showChatRoom && <ChatRoom />}
-      </>)
+      <button onClick={() => { setShowChatRoom(true); markdown = true; }}>Chatroom + Markdown</button></>}
+
+    {showChatRoom && <ChatRoom />}
+  </>)
 }
 
-function ChatRoom () {
->>>>>>> fea9dfe541266f1d9d113722bc284619a6f45f54
+function ChatRoom() {
   const dummy = useRef();
   const query = messagesRef.orderBy('createdAt', 'asc');
 
@@ -184,7 +168,7 @@ function ChatRoom () {
     console.log("text: ", formValue);
 
     //if (chatBot) {
-      getChatbot(formValue);
+    getChatbot(formValue);
     /*} else if (markdown) {
       console.log("markdown");
     }*/
@@ -250,20 +234,12 @@ async function getChatbot(formValue) {
 
       console.log('textValue', textValue);
 
-<<<<<<< HEAD
       messagesRef.add({
         text: textValue,
         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
         uid: "chatbot",
-        photoURL: "https://th.bing.com/th/id/R.cd9a844cbc07c07ad9d0059541b09b93?rik=JL3NwOT1mNEYAA&pid=ImgRaw&r=0"
+        photoURL: ChatBotImage().imageUrl
       })
-=======
-    messagesRef.add({
-      text: textValue,
-      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-      uid: "chatbot",
-      photoURL: ChatBotImage().imageUrl
->>>>>>> fea9dfe541266f1d9d113722bc284619a6f45f54
     })
     .catch(error => console.log('error', error));
 }
@@ -281,7 +257,7 @@ function ChatMessage(props) {
   </>)
 }
 
-function UserDefaultImage () {
+function UserDefaultImage() {
   const imageRef = storageRef.child('user.png');
 
   const [imageUrl, setImageUrl] = useState("");
@@ -292,10 +268,10 @@ function UserDefaultImage () {
     });
   }, []);
 
-  return {imageUrl};
+  return { imageUrl };
 }
 
-function ChatBotImage () {
+function ChatBotImage() {
   const imageRef = storageRef.child('chatbot.png');
 
   const [imageUrl, setImageUrl] = useState("");
@@ -306,7 +282,7 @@ function ChatBotImage () {
     });
   }, []);
 
-  return {imageUrl};
+  return { imageUrl };
 }
 
 export default App;
