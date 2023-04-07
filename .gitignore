@@ -116,3 +116,5 @@ yarn-error.log*
 
 /md/node_modules
 chatbot/.env
+
+chatbot/onlinemd-d57e3-firebase-adminsdk-csry8-bcc0687bcc.json
