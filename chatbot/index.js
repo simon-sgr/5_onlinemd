@@ -11,9 +11,6 @@ admin.initializeApp({
   databaseURL: "https://onlinemd-d57e3-default-rtdb.europe-west1.firebasedatabase.app"
 });
 
-
-
-
 // Importing the dotenv module to access environment variables
 require("dotenv").config();
 

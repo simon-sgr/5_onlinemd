@@ -34,13 +34,13 @@ const auth = firebase.auth();
 const firestore = firebase.firestore();
 const database = firebase.database();
 
-const messagesRef = firestore.collection('messages');
-const chatroomRef = firestore.collection('chatrooms');
+let messagesRef = firestore.collection('messages1');
 const storageRef = storage.ref();
 const databaseRef = database.ref();
 
 
 function App() {
+  const [chatRoom, setChatRoom] = useState('Chatroom I');
 
   const [user] = useAuthState(auth);
 
@@ -96,12 +96,14 @@ function App() {
   return (
     <div className="App">
       <header>
-        <h1>BRANNAN & SCHÖGGLER</h1>
+        <h1>ONLINEMD</h1>
         <SignOut />
       </header>
 
+      {user ? <ChatRoomSidebar chatRoom={chatRoom} setChatRoom={setChatRoom} /> : <></>}
+
       <section>
-        {user ? <ChatRooms /> : <SignIn />}
+        {user ? <ChatRoom chatRoom={chatRoom} setChatRoom={setChatRoom} /> : <SignIn />}
       </section>
     </div>
   );
@@ -125,28 +127,7 @@ function SignOut() {
 }
 
 
-let chatBot = false;
-let markdown = false;
-
-
-function ChatRooms() {
-  const [showChatRoom, setShowChatRoom] = useState(false);
-  chatBot = false;
-  markdown = false;
-
-  return (<>
-    {!showChatRoom && <>
-      <button onClick={() => { setShowChatRoom(true) }}>Chatroom</button>
-      <br></br>
-      <button onClick={() => { setShowChatRoom(true); chatBot = true; }}>Chatroom + Chatbot</button>
-      <br></br>
-      <button onClick={() => { setShowChatRoom(true); markdown = true; }}>Chatroom + Markdown</button></>}
-
-    {showChatRoom && <ChatRoom />}
-  </>)
-}
-
-function ChatRoom() {
+function ChatRoom({chatRoom, setChatRoom}) {
 
   writeUserOption(auth.currentUser.uid, 1);
 
@@ -164,28 +145,26 @@ function ChatRoom() {
 
     console.log("text: ", formValue);
 
-    //if (chatBot) {
-    /*} else if (markdown) {
-      console.log("markdown");
-    }*/
+    const mdMessage = await getMarkdown(formValue);
 
     const { uid, photoURL } = auth.currentUser;
 
     await messagesRef.add({
-      text: formValue,
+      text: mdMessage,
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       uid: uid,
       photoURL: photoURL
     })
 
-    
+
     getChatbot(formValue);
 
     setFormValue('');
     dummy.current.scrollIntoView({ behavior: 'smooth' });
   }
 
-  return (<>
+  return (<div id='chatroom'>
+    <h3 id='chatRoomHeader'>{chatRoom}</h3>
     <main>
 
       {messages && messages.map(msg => <ChatMessage key={msg.id} message={msg} />)}
@@ -201,7 +180,35 @@ function ChatRoom() {
       <button id='sendMessageButton' type="submit" disabled={!formValue}>✔️</button>
 
     </form>
-  </>)
+  </div>)
+}
+
+async function getMarkdown(formValue) {
+  try {
+    const idToken = await auth.currentUser.getIdToken(/* forceRefresh */ true);
+
+    var myHeaders = new Headers();
+    myHeaders.append("authorization", idToken);
+    myHeaders.append("Content-Type", "text/plain");
+
+
+    var raw = formValue;
+
+    var requestOptions = {
+      method: 'POST',
+      headers: myHeaders,
+      body: raw,
+      redirect: 'follow'
+    };
+
+    const response = await fetch("http://localhost:3002/markdown", requestOptions);
+    const result = await response.text();
+
+    return result;
+
+  } catch (error) {
+    console.log('error', error);
+  }
 }
 
 async function getChatbot(formValue) {
@@ -265,9 +272,22 @@ function ChatMessage(props) {
   return (<>
     <div className={`message ${messageClass}`}>
       <img alt='GOOGLE PROFILE' src={photoURL} />
-      <p id={`${createdAt}`}>{text}</p>
+      <p dangerouslySetInnerHTML={{ __html: text }} id={`${createdAt}`}></p>
     </div>
   </>)
+}
+
+function ChatRoomSidebar({chatRoom, setChatRoom}) {
+  return (<>
+    <div className="sidebar">
+      <h2>Chatrooms</h2>
+      <ul>
+        <li><button onClick={() => { messagesRef = firestore.collection('messages1'); console.log('Chatroom I'); setChatRoom('Chatroom I');}}>Chatroom I</button></li>
+        <li><button onClick={() => { messagesRef = firestore.collection('messages2'); console.log('Chatroom II'); setChatRoom('Chatroom II');}}>Chatroom II</button></li>
+        <li><button onClick={() => { messagesRef = firestore.collection('messages3'); console.log('Chatroom III'); setChatRoom('Chatroom III');}}>Chatroom III</button></li>
+      </ul>
+    </div>
+  </>);
 }
 
 const UserDefaultImage = async () => {
