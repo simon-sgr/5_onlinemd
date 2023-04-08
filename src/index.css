@@ -112,15 +112,14 @@ li {
   list-style: none;
 }
 
-p {
+.chatMessage {
   max-width: 500px;
-  margin-bottom: 12px;
   line-height: 24px;
-  padding: 10px 20px;
   border-radius: 25px;
   position: relative;
   color: white;
   text-align: center;
+  padding: 10px;
 }
 
 .message {

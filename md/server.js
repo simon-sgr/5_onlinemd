@@ -3,13 +3,13 @@ const marked = require('marked');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 
-const admin = require("firebase-admin");
+const admin = require('firebase-admin');
 
-const serviceAccount = require("./onlinemd-d57e3-firebase-adminsdk-csry8-bcc0687bcc.json");
+const serviceAccount = require('./onlinemd-d57e3-firebase-adminsdk-csry8-bcc0687bcc.json');
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
-  databaseURL: "https://onlinemd-d57e3-default-rtdb.europe-west1.firebasedatabase.app"
+  databaseURL: 'https://onlinemd-d57e3-default-rtdb.europe-west1.firebasedatabase.app'
 });
 
 const app = express();
