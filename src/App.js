@@ -208,6 +208,7 @@ async function getMarkdown(formValue) {
 
   } catch (error) {
     console.log('error', error);
+    return formValue;
   }
 }
 
