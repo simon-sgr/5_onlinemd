@@ -4,6 +4,8 @@ const cors = require('cors');
 const admin = require('firebase-admin');
 const bodyParser = require('body-parser');
 
+require("dotenv").config();
+
 sdk.auth(process.env.API_KEY);
 const app = express();
 app.use(express.static('public'));
