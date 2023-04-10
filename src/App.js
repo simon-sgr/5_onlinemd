@@ -127,7 +127,7 @@ function SignOut() {
 }
 
 
-function ChatRoom({chatRoom, setChatRoom}) {
+function ChatRoom({ chatRoom, setChatRoom }) {
 
   writeUserOption(auth.currentUser.uid, 1);
 
@@ -202,7 +202,12 @@ async function getMarkdown(formValue) {
     };
 
     const response = await fetch("http://localhost:3002/markdown", requestOptions);
-    const result = await response.text();
+    let result = await response.text();
+
+    result = result.replace("<p>", "");
+    result = result.replace("</p>", "");
+
+    console.log(result);
 
     return result;
 
@@ -224,9 +229,11 @@ async function getChatbot(formValue) {
 
     var myHeaders = new Headers();
     myHeaders.append("authorization", idToken);
-    myHeaders.append("Content-Type", "application/json");
+    myHeaders.append("Content-Type", "text/plain");
+    //myHeaders.append("Content-Type", "application/json");
 
-    var raw = JSON.stringify(message);
+    //let raw = JSON.stringify(message);
+    let raw = formValue;
 
     var requestOptions = {
       method: 'POST',
@@ -237,10 +244,15 @@ async function getChatbot(formValue) {
 
     console.log('requestOptions', requestOptions);
 
-    const response = await fetch("http://localhost:3001/converse", requestOptions);
+    const response = await fetch("http://localhost:3003/converse", requestOptions);
     const result = await response.text();
     console.log(result);
-    let textValue = result;
+
+    let textValue = await getMarkdown(result);
+
+    // let textValue = result;
+
+
     /*if (result !== 'THE AI IS NOT WORKING AT THE MOMENT') {
       const jsonObject = JSON.parse(result);
 
@@ -273,19 +285,19 @@ function ChatMessage(props) {
   return (<>
     <div className={`message ${messageClass}`}>
       <img alt='GOOGLE PROFILE' src={photoURL} />
-      <p dangerouslySetInnerHTML={{ __html: text }} id={`${createdAt}`}></p>
+      <p dangerouslySetInnerHTML={{ __html: text }} id={`${createdAt}`} className='chatMessage'></p>
     </div>
   </>)
 }
 
-function ChatRoomSidebar({chatRoom, setChatRoom}) {
+function ChatRoomSidebar({ chatRoom, setChatRoom }) {
   return (<>
     <div className="sidebar">
       <h2>Chatrooms</h2>
       <ul>
-        <li><button onClick={() => { messagesRef = firestore.collection('messages1'); console.log('Chatroom I'); setChatRoom('Chatroom I');}}>Chatroom I</button></li>
-        <li><button onClick={() => { messagesRef = firestore.collection('messages2'); console.log('Chatroom II'); setChatRoom('Chatroom II');}}>Chatroom II</button></li>
-        <li><button onClick={() => { messagesRef = firestore.collection('messages3'); console.log('Chatroom III'); setChatRoom('Chatroom III');}}>Chatroom III</button></li>
+        <li><button onClick={() => { messagesRef = firestore.collection('messages1'); console.log('Chatroom I'); setChatRoom('Chatroom I'); }}>Chatroom I</button></li>
+        <li><button onClick={() => { messagesRef = firestore.collection('messages2'); console.log('Chatroom II'); setChatRoom('Chatroom II'); }}>Chatroom II</button></li>
+        <li><button onClick={() => { messagesRef = firestore.collection('messages3'); console.log('Chatroom III'); setChatRoom('Chatroom III'); }}>Chatroom III</button></li>
       </ul>
     </div>
   </>);
