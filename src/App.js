@@ -228,9 +228,11 @@ async function getChatbot(formValue) {
 
     var myHeaders = new Headers();
     myHeaders.append("authorization", idToken);
-    myHeaders.append("Content-Type", "application/json");
+    myHeaders.append("Content-Type", "text/plain");
+    //myHeaders.append("Content-Type", "application/json");
 
-    var raw = JSON.stringify(message);
+    //let raw = JSON.stringify(message);
+    let raw = formValue;
 
     var requestOptions = {
       method: 'POST',
@@ -241,10 +243,15 @@ async function getChatbot(formValue) {
 
     console.log('requestOptions', requestOptions);
 
-    const response = await fetch("http://localhost:3001/converse", requestOptions);
+    const response = await fetch("http://localhost:3003/converse", requestOptions);
     const result = await response.text();
     console.log(result);
-    let textValue = result;
+
+    let textValue = await getMarkdown(result);
+
+    // let textValue = result;
+
+
     /*if (result !== 'THE AI IS NOT WORKING AT THE MOMENT') {
       const jsonObject = JSON.parse(result);
 

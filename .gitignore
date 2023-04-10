@@ -115,6 +115,8 @@ yarn-debug.log*
 yarn-error.log*
 
 /md/node_modules
-chatbot/.env
+/chatbot/.env
+/sonic/.env
+/sonic/node_modules
 
 onlinemd-d57e3-firebase-adminsdk-csry8-bcc0687bcc.json
